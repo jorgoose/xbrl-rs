@@ -4,6 +4,7 @@
 
 - added
 - changed
+  - Update `quick-xml` to 0.41 (RUSTSEC-2026-0194, RUSTSEC-2026-0195)
 - removed
 
 ## v0.3.1 (unreleased)

@@ -3,7 +3,7 @@ use crate::{
     xml::{self, ArcroleRef, RoleRef, SchemaRef, parse_qname},
 };
 use quick_xml::{
-    Reader,
+    Reader, XmlVersion,
     events::{BytesStart, Event, attributes::Attributes},
 };
 use std::{
@@ -355,7 +355,7 @@ impl<R: BufRead> InstanceParser<R> {
             {
                 let local = key.local_name();
                 let namespace_prefix = str::from_utf8(local.as_ref())?;
-                let uri = attribute.decode_and_unescape_value(self.reader.decoder())?;
+                let uri = attribute.normalized_value(XmlVersion::Implicit1_0)?;
                 instance.namespaces.insert(
                     NamespacePrefix::from(namespace_prefix),
                     NamespaceUri::from(uri.into_owned()),
@@ -381,7 +381,7 @@ impl<R: BufRead> InstanceParser<R> {
             })?;
 
             if attribute.key.local_name().as_ref() == b"href" {
-                let value = attribute.decode_and_unescape_value(self.reader.decoder())?;
+                let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
                 instance.schema_refs.push(SchemaRef {
                     href: value.into_owned(),
                 });
@@ -412,7 +412,7 @@ impl<R: BufRead> InstanceParser<R> {
                 source: err.into(),
             })?;
             let local_name = attribute.key.local_name();
-            let value = attribute.decode_and_unescape_value(self.reader.decoder())?;
+            let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
 
             match local_name.as_ref() {
                 b"roleURI" => role_uri = Some(value.into_owned()),
@@ -452,7 +452,7 @@ impl<R: BufRead> InstanceParser<R> {
                 source: err.into(),
             })?;
             let local_name = attribute.key.local_name();
-            let value = attribute.decode_and_unescape_value(self.reader.decoder())?;
+            let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
 
             match local_name.as_ref() {
                 b"arcroleURI" => arcrole_uri = Some(value.into_owned()),
@@ -496,7 +496,7 @@ impl<R: BufRead> InstanceParser<R> {
             })?;
 
             if attribute.key.local_name().as_ref() == b"id" {
-                let value = attribute.decode_and_unescape_value(self.reader.decoder())?;
+                let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
                 id = Some(value.into_owned());
             }
         }
@@ -569,8 +569,7 @@ impl<R: BufRead> InstanceParser<R> {
                             })?;
 
                             if attribute.key.local_name().as_ref() == b"scheme" {
-                                let value =
-                                    attribute.decode_and_unescape_value(self.reader.decoder())?;
+                                let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
                                 scheme = Some(value.into_owned());
                             }
                         }
@@ -581,7 +580,9 @@ impl<R: BufRead> InstanceParser<R> {
                     _ => {}
                 },
                 Event::Text(ref text) if identifier.is_none() => {
-                    let value = text.xml_content().map_err(quick_xml::Error::from)?;
+                    let value = text
+                        .xml_content(XmlVersion::Explicit1_1)
+                        .map_err(quick_xml::Error::from)?;
                     identifier = Some(value.into_owned());
                 }
                 Event::End(ref event) if event.local_name().as_ref() == b"entity" => break,
@@ -622,7 +623,7 @@ impl<R: BufRead> InstanceParser<R> {
                 }
                 Event::Text(ref text) => {
                     let value = text
-                        .xml_content()
+                        .xml_content(XmlVersion::Explicit1_1)
                         .map_err(quick_xml::Error::from)?
                         .into_owned();
                     match current_tag.as_deref() {
@@ -682,8 +683,7 @@ impl<R: BufRead> InstanceParser<R> {
                         })?;
 
                         if attribute.key.local_name().as_ref() == b"dimension" {
-                            let value =
-                                attribute.decode_and_unescape_value(self.reader.decoder())?;
+                            let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
                             dimension = Some(parse_qname(&value));
                         }
                     }
@@ -694,7 +694,9 @@ impl<R: BufRead> InstanceParser<R> {
                         if let Event::Text(ref text) =
                             self.reader.read_event_into(&mut member_buf)?
                         {
-                            let member = text.xml_content().map_err(quick_xml::Error::from)?;
+                            let member = text
+                                .xml_content(XmlVersion::Explicit1_1)
+                                .map_err(quick_xml::Error::from)?;
                             let member = parse_qname(member.trim());
                             dimensions.push(RawDimension { dimension, member });
                         }
@@ -732,7 +734,7 @@ impl<R: BufRead> InstanceParser<R> {
             })?;
 
             if attribute.key.local_name().as_ref() == b"id" {
-                let value = attribute.decode_and_unescape_value(self.reader.decoder())?;
+                let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
                 id = Some(value.into_owned());
             }
         }
@@ -751,7 +753,9 @@ impl<R: BufRead> InstanceParser<R> {
                     b"measure" => {
                         let mut text_buf = Vec::new();
                         if let Event::Text(ref text) = self.reader.read_event_into(&mut text_buf)? {
-                            let value = text.xml_content().map_err(quick_xml::Error::from)?;
+                            let value = text
+                                .xml_content(XmlVersion::Explicit1_1)
+                                .map_err(quick_xml::Error::from)?;
                             let qname = xml::parse_qname(&value);
                             numerator.push(qname);
                         }
@@ -796,7 +800,9 @@ impl<R: BufRead> InstanceParser<R> {
                     b"measure" => {
                         let mut text_buf = Vec::new();
                         if let Event::Text(ref text) = self.reader.read_event_into(&mut text_buf)? {
-                            let value = text.xml_content().map_err(quick_xml::Error::from)?;
+                            let value = text
+                                .xml_content(XmlVersion::Explicit1_1)
+                                .map_err(quick_xml::Error::from)?;
                             let qname = xml::parse_qname(&value);
                             if in_numerator {
                                 numerator.push(qname);
@@ -893,7 +899,7 @@ impl<R: BufRead> InstanceParser<R> {
                 source: err.into(),
             })?;
             let local_name = attribute.key.local_name();
-            let value = attribute.decode_and_unescape_value(self.reader.decoder())?;
+            let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
 
             match local_name.as_ref() {
                 b"contextRef" => context_ref = Some(value.into_owned()),
@@ -914,7 +920,9 @@ impl<R: BufRead> InstanceParser<R> {
             loop {
                 match self.reader.read_event_into(&mut buf)? {
                     Event::Text(ref text) => {
-                        let decoded = text.xml_content().map_err(quick_xml::Error::from)?;
+                        let decoded = text
+                            .xml_content(XmlVersion::Explicit1_1)
+                            .map_err(quick_xml::Error::from)?;
                         value.push_str(&decoded);
                     }
                     Event::End(ref end) if end.name().as_ref() == event.name().as_ref() => break,
@@ -992,7 +1000,7 @@ impl<R: BufRead> InstanceParser<R> {
                 source: err.into(),
             })?;
             let local_name = attribute.key.local_name();
-            let value = attribute.decode_and_unescape_value(self.reader.decoder())?;
+            let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
 
             match local_name.as_ref() {
                 b"contextRef" => context_ref = Some(value.into_owned()),
@@ -1043,7 +1051,7 @@ impl<R: BufRead> InstanceParser<R> {
             })?;
 
             if attribute.key.local_name().as_ref() == b"role" {
-                let value = attribute.decode_and_unescape_value(self.reader.decoder())?;
+                let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
                 role = value.into_owned();
             }
         }
@@ -1069,8 +1077,7 @@ impl<R: BufRead> InstanceParser<R> {
                                     source: err.into(),
                                 })?;
                                 let local_name = attribute.key.local_name();
-                                let value =
-                                    attribute.decode_and_unescape_value(self.reader.decoder())?;
+                                let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
 
                                 match local_name.as_ref() {
                                     b"label" => label = Some(value.into_owned()),
@@ -1095,8 +1102,7 @@ impl<R: BufRead> InstanceParser<R> {
                                     source: err.into(),
                                 })?;
                                 let local_name = attribute.key.local_name();
-                                let value =
-                                    attribute.decode_and_unescape_value(self.reader.decoder())?;
+                                let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
 
                                 match local_name.as_ref() {
                                     b"from" => from = Some(value.into_owned()),
@@ -1121,8 +1127,7 @@ impl<R: BufRead> InstanceParser<R> {
                                     source: err.into(),
                                 })?;
                                 let local_name = attribute.key.local_name();
-                                let value =
-                                    attribute.decode_and_unescape_value(self.reader.decoder())?;
+                                let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
 
                                 match local_name.as_ref() {
                                     b"label" => label = Some(value.into_owned()),
@@ -1137,8 +1142,9 @@ impl<R: BufRead> InstanceParser<R> {
                             loop {
                                 match self.reader.read_event_into(&mut text_buf)? {
                                     Event::Text(ref t) => {
-                                        let decoded =
-                                            t.xml_content().map_err(quick_xml::Error::from)?;
+                                        let decoded = t
+                                            .xml_content(XmlVersion::Explicit1_1)
+                                            .map_err(quick_xml::Error::from)?;
                                         text.push_str(&decoded);
                                     }
                                     Event::End(ref e) if e.local_name().as_ref() == b"footnote" => {
