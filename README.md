@@ -42,7 +42,7 @@ To download XBRL taxonomies, feature `download` needs to be enabled.
 // Parse XBRL instance document from XML file
 let instance = InstanceDocument::from_file("/path/to/financial_report.xml").unwrap();
 
-// Validate instance document against taxonomy
+// Download taxonomies and discover taxonomy set
 let schema_refs = instance.schema_refs();
 let taxonomy_root = "/path/to/taxonomies";
 let loader = TaxonomyLoader::new().unwrap();
@@ -50,6 +50,8 @@ loader
     .download_all(schema_refs.iter().map(String::as_str), taxonomy_root)
     .unwrap();
 let taxonomy = TaxonomySet::discover(schema_refs.to_vec(), taxonomy_root.into()).unwrap();
+
+// Validate instance document against taxonomy
 let validation_result = instance.validate(&taxonomy);
 ```
 
