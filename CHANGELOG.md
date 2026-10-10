@@ -6,6 +6,11 @@
 - changed
 - removed
 
+## v0.3.1 (unreleased)
+
+- changed
+  - Update Rust to 1.96
+
 ## v0.3.0 (2026-05-16)
 
 - fixed
