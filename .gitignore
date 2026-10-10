@@ -1,5 +1,7 @@
 # Rust
 /target
+.cargo/*
+!.cargo/audit.toml
 
 # Python
 .mypy_cache
