@@ -1,9 +1,9 @@
 use crate::{
     NamespacePrefix, NamespaceUri, QName, XbrlError,
-    xml::{self, ArcroleRef, RoleRef, SchemaRef, parse_qname},
+    xml::{self, ArcroleRef, RoleRef, SchemaRef, XML_VERSION, parse_qname},
 };
 use quick_xml::{
-    Reader, XmlVersion,
+    Reader,
     events::{BytesStart, Event, attributes::Attributes},
 };
 use std::{
@@ -355,7 +355,7 @@ impl<R: BufRead> InstanceParser<R> {
             {
                 let local = key.local_name();
                 let namespace_prefix = str::from_utf8(local.as_ref())?;
-                let uri = attribute.normalized_value(XmlVersion::Implicit1_0)?;
+                let uri = attribute.normalized_value(XML_VERSION)?;
                 instance.namespaces.insert(
                     NamespacePrefix::from(namespace_prefix),
                     NamespaceUri::from(uri.into_owned()),
@@ -381,7 +381,7 @@ impl<R: BufRead> InstanceParser<R> {
             })?;
 
             if attribute.key.local_name().as_ref() == b"href" {
-                let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
+                let value = attribute.normalized_value(XML_VERSION)?;
                 instance.schema_refs.push(SchemaRef {
                     href: value.into_owned(),
                 });
@@ -412,7 +412,7 @@ impl<R: BufRead> InstanceParser<R> {
                 source: err.into(),
             })?;
             let local_name = attribute.key.local_name();
-            let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
+            let value = attribute.normalized_value(XML_VERSION)?;
 
             match local_name.as_ref() {
                 b"roleURI" => role_uri = Some(value.into_owned()),
@@ -452,7 +452,7 @@ impl<R: BufRead> InstanceParser<R> {
                 source: err.into(),
             })?;
             let local_name = attribute.key.local_name();
-            let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
+            let value = attribute.normalized_value(XML_VERSION)?;
 
             match local_name.as_ref() {
                 b"arcroleURI" => arcrole_uri = Some(value.into_owned()),
@@ -496,7 +496,7 @@ impl<R: BufRead> InstanceParser<R> {
             })?;
 
             if attribute.key.local_name().as_ref() == b"id" {
-                let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
+                let value = attribute.normalized_value(XML_VERSION)?;
                 id = Some(value.into_owned());
             }
         }
@@ -569,7 +569,7 @@ impl<R: BufRead> InstanceParser<R> {
                             })?;
 
                             if attribute.key.local_name().as_ref() == b"scheme" {
-                                let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
+                                let value = attribute.normalized_value(XML_VERSION)?;
                                 scheme = Some(value.into_owned());
                             }
                         }
@@ -581,7 +581,7 @@ impl<R: BufRead> InstanceParser<R> {
                 },
                 Event::Text(ref text) if identifier.is_none() => {
                     let value = text
-                        .xml_content(XmlVersion::Explicit1_1)
+                        .xml_content(XML_VERSION)
                         .map_err(quick_xml::Error::from)?;
                     identifier = Some(value.into_owned());
                 }
@@ -623,7 +623,7 @@ impl<R: BufRead> InstanceParser<R> {
                 }
                 Event::Text(ref text) => {
                     let value = text
-                        .xml_content(XmlVersion::Explicit1_1)
+                        .xml_content(XML_VERSION)
                         .map_err(quick_xml::Error::from)?
                         .into_owned();
                     match current_tag.as_deref() {
@@ -683,7 +683,7 @@ impl<R: BufRead> InstanceParser<R> {
                         })?;
 
                         if attribute.key.local_name().as_ref() == b"dimension" {
-                            let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
+                            let value = attribute.normalized_value(XML_VERSION)?;
                             dimension = Some(parse_qname(&value));
                         }
                     }
@@ -695,7 +695,7 @@ impl<R: BufRead> InstanceParser<R> {
                             self.reader.read_event_into(&mut member_buf)?
                         {
                             let member = text
-                                .xml_content(XmlVersion::Explicit1_1)
+                                .xml_content(XML_VERSION)
                                 .map_err(quick_xml::Error::from)?;
                             let member = parse_qname(member.trim());
                             dimensions.push(RawDimension { dimension, member });
@@ -734,7 +734,7 @@ impl<R: BufRead> InstanceParser<R> {
             })?;
 
             if attribute.key.local_name().as_ref() == b"id" {
-                let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
+                let value = attribute.normalized_value(XML_VERSION)?;
                 id = Some(value.into_owned());
             }
         }
@@ -754,7 +754,7 @@ impl<R: BufRead> InstanceParser<R> {
                         let mut text_buf = Vec::new();
                         if let Event::Text(ref text) = self.reader.read_event_into(&mut text_buf)? {
                             let value = text
-                                .xml_content(XmlVersion::Explicit1_1)
+                                .xml_content(XML_VERSION)
                                 .map_err(quick_xml::Error::from)?;
                             let qname = xml::parse_qname(&value);
                             numerator.push(qname);
@@ -801,7 +801,7 @@ impl<R: BufRead> InstanceParser<R> {
                         let mut text_buf = Vec::new();
                         if let Event::Text(ref text) = self.reader.read_event_into(&mut text_buf)? {
                             let value = text
-                                .xml_content(XmlVersion::Explicit1_1)
+                                .xml_content(XML_VERSION)
                                 .map_err(quick_xml::Error::from)?;
                             let qname = xml::parse_qname(&value);
                             if in_numerator {
@@ -899,7 +899,7 @@ impl<R: BufRead> InstanceParser<R> {
                 source: err.into(),
             })?;
             let local_name = attribute.key.local_name();
-            let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
+            let value = attribute.normalized_value(XML_VERSION)?;
 
             match local_name.as_ref() {
                 b"contextRef" => context_ref = Some(value.into_owned()),
@@ -921,7 +921,7 @@ impl<R: BufRead> InstanceParser<R> {
                 match self.reader.read_event_into(&mut buf)? {
                     Event::Text(ref text) => {
                         let decoded = text
-                            .xml_content(XmlVersion::Explicit1_1)
+                            .xml_content(XML_VERSION)
                             .map_err(quick_xml::Error::from)?;
                         value.push_str(&decoded);
                     }
@@ -1000,7 +1000,7 @@ impl<R: BufRead> InstanceParser<R> {
                 source: err.into(),
             })?;
             let local_name = attribute.key.local_name();
-            let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
+            let value = attribute.normalized_value(XML_VERSION)?;
 
             match local_name.as_ref() {
                 b"contextRef" => context_ref = Some(value.into_owned()),
@@ -1051,7 +1051,7 @@ impl<R: BufRead> InstanceParser<R> {
             })?;
 
             if attribute.key.local_name().as_ref() == b"role" {
-                let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
+                let value = attribute.normalized_value(XML_VERSION)?;
                 role = value.into_owned();
             }
         }
@@ -1077,7 +1077,7 @@ impl<R: BufRead> InstanceParser<R> {
                                     source: err.into(),
                                 })?;
                                 let local_name = attribute.key.local_name();
-                                let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
+                                let value = attribute.normalized_value(XML_VERSION)?;
 
                                 match local_name.as_ref() {
                                     b"label" => label = Some(value.into_owned()),
@@ -1102,7 +1102,7 @@ impl<R: BufRead> InstanceParser<R> {
                                     source: err.into(),
                                 })?;
                                 let local_name = attribute.key.local_name();
-                                let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
+                                let value = attribute.normalized_value(XML_VERSION)?;
 
                                 match local_name.as_ref() {
                                     b"from" => from = Some(value.into_owned()),
@@ -1127,7 +1127,7 @@ impl<R: BufRead> InstanceParser<R> {
                                     source: err.into(),
                                 })?;
                                 let local_name = attribute.key.local_name();
-                                let value = attribute.normalized_value(XmlVersion::Implicit1_0)?;
+                                let value = attribute.normalized_value(XML_VERSION)?;
 
                                 match local_name.as_ref() {
                                     b"label" => label = Some(value.into_owned()),
@@ -1143,7 +1143,7 @@ impl<R: BufRead> InstanceParser<R> {
                                 match self.reader.read_event_into(&mut text_buf)? {
                                     Event::Text(ref t) => {
                                         let decoded = t
-                                            .xml_content(XmlVersion::Explicit1_1)
+                                            .xml_content(XML_VERSION)
                                             .map_err(quick_xml::Error::from)?;
                                         text.push_str(&decoded);
                                     }
@@ -1469,6 +1469,46 @@ mod tests {
         assert_matches!(&instance.facts[0], RawFact::Item(fact) => {
             assert_eq!(fact.name.to_string(), "t:Description");
             assert_eq!(fact.value, "Revenue for the period");
+        });
+    }
+
+    #[test]
+    fn test_parse_item_fact_xml_10_line_endings() {
+        for version in ["1.0", "1.1"] {
+            for (text, expected) in [
+                ("a\u{85}b", "a b"),
+                ("a\u{2028}b", "a b"),
+                ("a\r\u{85}b", "a b"),
+                ("a\rb", "ab"),
+                ("a\r\nb", "ab"),
+                ("a\nb", "ab"),
+                ("ordinary text", "ordinary text"),
+            ] {
+                let xml = format!(
+                    "<?xml version=\"{version}\"?><xbrli:xbrl
+                     xmlns:xbrli=\"http://www.xbrl.org/2003/instance\"
+                     xmlns:t=\"http://example.com/taxonomy\">
+                     <t:Description contextRef=\"c1\">{text}</t:Description>
+                     </xbrli:xbrl>"
+                );
+                let instance = InstanceParser::from_reader(xml.as_bytes()).parse().unwrap();
+                assert_matches!(&instance.facts[0], RawFact::Item(fact) => {
+                    assert_eq!(fact.value, expected, "version={version}, text={text:?}");
+                });
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_fact_xml_10_attribute_normalization() {
+        let xml = "<xbrli:xbrl xmlns:xbrli=\"http://www.xbrl.org/2003/instance\"
+                   xmlns:t=\"http://example.com/taxonomy\">
+                   <t:Description contextRef=\"a\tb\r\nc\rd\ne&#9;f&#10;g&#13;h&amp;i\u{85}j\u{2028}k\">ordinary text</t:Description>
+                   </xbrli:xbrl>";
+        let instance = InstanceParser::from_reader(xml.as_bytes()).parse().unwrap();
+        assert_matches!(&instance.facts[0], RawFact::Item(fact) => {
+            assert_eq!(fact.context_ref, "a b c d e\tf\ng\rh&i\u{85}j\u{2028}k");
+            assert_eq!(fact.value, "ordinary text");
         });
     }
 
